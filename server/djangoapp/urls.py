@@ -5,8 +5,7 @@ from . import views
 
 app_name = 'djangoapp'
 urlpatterns = [
-    path(route='', view=views.get_dealerships, name='index'),
-    path(route='about/', view=views.about, name='about'),
-    path(route='contact/', view=views.contact, name='contact'),
-    # Add other URL patterns as needed
+    path('', views.get_dealerships, name='index'),
+    path('about/', views.about, name='about'),
+    path('contact/', views.contact, name='contact'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
