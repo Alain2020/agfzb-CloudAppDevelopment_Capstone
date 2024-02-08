@@ -8,7 +8,7 @@ on:
 
 jobs: # list of things to do
   lint_function_js:
-    name: Linting JavaScript Function
+    name: Linting JavaScript Function 
     runs-on: ubuntu-latest 
     steps: # list of steps
       - name: Install NodeJS
@@ -17,7 +17,7 @@ jobs: # list of things to do
           node-version: 20  # Updated to Node.js 20
 
       - name: Code Checkout
-        uses: actions/checkout@v2  # Updated to v2 for compatibility with Node.js 20
+        uses: actions/checkout@v3  # Updated to v3 for compatibility with Node.js 20
 
       - name: Install Dependencies
         run: npm install
