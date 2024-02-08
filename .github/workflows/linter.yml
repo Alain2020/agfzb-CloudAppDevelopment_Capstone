@@ -8,7 +8,7 @@ on:
 
 jobs: # list of things to do
   lint_function_js:
-    name: Linting JavaScript Function 
+    name: Linting JavaScript Function
     runs-on: ubuntu-latest 
     steps: # list of steps
       - name: Install NodeJS
