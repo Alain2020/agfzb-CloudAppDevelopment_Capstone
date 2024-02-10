@@ -5,63 +5,70 @@
     {% load static %}
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
-    <body>
-        <nav class="navbar-dark navbar-expand-lg bg-dark">
-        <div class="container-fluid">
-          <a class="navbar-brand" href="#">Best Cars</a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-            <div class="navbar-nav">
-              <a class="nav-link active" aria-current="page" href="{% url 'djangoapp:index' %}">Home</a>
-              <a class='nav-link' href="{% url 'djangoapp:about' %}">About Us</a>
-              <a class="nav-link" href="{% url 'djangoapp:contact' %}">Contact Us</a>
-              <ul class="nav navbar-nav navbar-right">
-                {% if user.is_authenticated %}
-                <li>
-                     <a class="btn btn-link" href="#">{{ user.first_name }}({{ user.username }})</a>
-                     <a class="btn btn-link" href="{% url 'djangoapp:logout' %}">Logout</a>
-                </li>
-                {% else %}
-                <li>
-                     <form class="form-inline" action="{% url 'djangoapp:login' %}" method="post">
-                        {% csrf_token %}
-                        <div class="input-group">
-                             <input type="text" class="form-control" placeholder="Username" name="username" >
-                             <input type="password" class="form-control" placeholder="Password" name="psw" >
-                             <button class="btn btn-info" type="submit">Login</button>
-                             <a class="btn btn-info" href="{% url 'djangoapp:registration' %}">Sign Up</a>
-                        </div>
-                     </form>
-                </li>
-                {% endif %}
-              </ul>
+<body>
+<!--Add a registration form here -->
+<div class="container mt-5">
+    <h2>Sign Up</h2>
+    <form method="post" action="{% url 'djangoapp:registration_request' %}" class="needs-validation" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="first_name">First Name:</label>
+            <input type="text" name="first_name" class="form-control" required>
+            <div class="invalid-feedback">
+                Please enter your first name.
             </div>
-          </div>
         </div>
-    </nav>
-    <div class="container">
-        <h1 class='display-3 text-center'>Sign Up</h1></br>
-        <form action="{% url 'djangoapp:registration' %}" method="post">
-            <div class="form-group">
-              <label for="username">User Name:</label>
-              <input type="text" class="form-control" placeholder="Enter User Name" id="id_username" name='username'>
+        <div class="form-group">
+            <label for="last_name">Last Name:</label>
+            <input type="text" name="last_name" class="form-control" required>
+            <div class="invalid-feedback">
+                Please enter your last name.
             </div>
-            <div class="form-group">
-                <label for="firstname">First Name:</label>
-                <input type="text" class="form-control" placeholder="Enter First Name" id="id_firstname" name="firstname">
+        </div>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" name="username" class="form-control" required>
+            <div class="invalid-feedback">
+                Please choose a username.
             </div>
-            <div class="form-group">
-                <label for="lastname">Last Name:</label>
-                <input type="text" class="form-control" placeholder="Enter Last Name" id="id_lastname" name="lastname">
+        </div>
+        <div class="form-group">
+            <label for="password1">Password:</label>
+            <input type="password" name="password1" class="form-control" required>
+            <div class="invalid-feedback">
+                Please enter a password.
             </div>
-            <div class="form-group">
-              <label for="psw">Password:</label>
-              <input type="password" class="form-control" placeholder="Enter password" id="id_psw" name="psw">
+        </div>
+        <div class="form-group">
+            <label for="password2">Confirm Password:</label>
+            <input type="password" name="password2" class="form-control" required>
+            <div class="invalid-feedback">
+                Please confirm your password.
             </div>
-                <button type="submit" class="btn btn-info">Sign Up</button>
-          </form>
-    </div>
-    </body>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+    </form>
+</div>
+
+<script>
+    // JavaScript to add Bootstrap's validation styling
+    (function () {
+        'use strict';
+
+        window.addEventListener('load', function () {
+            var forms = document.getElementsByClassName('needs-validation');
+
+            var validation = Array.prototype.filter.call(forms, function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+</body>
 </html>

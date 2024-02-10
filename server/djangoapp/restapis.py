@@ -46,25 +46,36 @@ def analyze_review_sentiments(dealerreview, api_key=None):
     if response:
         return response
 
-def get_dealer_reviews_from_cf(url, dealer_id, api_key=None):
+def get_dealers_from_cf(url, api_key=None, **kwargs):
     results = []
-    json_result = get_request(url, api_key, id=dealer_id)
+    json_result = get_request(url, api_key, **kwargs)
     if json_result:
-        for review_doc in json_result:
-            review_obj = DealerReview(
-                dealership=review_doc.get("dealership", ""),
-                name=review_doc.get("name", ""),
-                purchase=review_doc.get("purchase", False),
-                review=review_doc.get("review", ""),
-                purchase_date=review_doc.get("purchase_date", ""),
-                car_make=review_doc.get("car_make", ""),
-                car_model=review_doc.get("car_model", ""),
-                car_year=review_doc.get("car_year", ""),
-                sentiment=analyze_review_sentiments(review_doc.get("review", ""), api_key),
-                id=review_doc.get("id", "")
-            )
-            results.append(review_obj)
+        if isinstance(json_result, list):
+            for dealer_doc in json_result:
+                dealer = dealer_doc  # Add this line
+                dealer_obj = CarDealer(
+                    address=dealer.get("address", ""),
+                    city=dealer.get("city", ""),
+                    full_name=dealer.get("full_name", ""),
+                    id=dealer.get("id", ""),
+                    lat=dealer.get("lat", 0),
+                    long=dealer.get("long", 0),
+                    short_name=dealer.get("short_name", ""),
+                    st=dealer.get("st", ""),
+                    zip=dealer.get("zip", "")
+                )
+                results.append(dealer_obj)
+        else:
+            print("Error: Invalid JSON format for dealers data")
     return results
+
+
+def get_dealer_by_id_from_cf(url, id, api_key=None):
+    results = get_request(url, api_key, id=id)
+    if results:
+        return results[0]
+    else:
+        return None
 
 def get_dealers_from_cf(url, api_key=None, **kwargs):
     results = []
