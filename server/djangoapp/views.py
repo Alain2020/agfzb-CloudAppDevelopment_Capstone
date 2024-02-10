@@ -4,6 +4,29 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from .forms import CustomUserCreationForm
+from .restapis import get_dealers_from_cf, get_dealer_reviews_from_cf
+from django.http import HttpResponse
+
+# Define your views here
+
+def registration_view(request):
+    # Your registration logic here
+    return HttpResponse("Registration view")
+
+def get_dealer_details(request, dealer_id):
+    url = "https://example.com/get-reviews"  # Replace with your actual URL
+    reviews = get_dealer_reviews_from_cf(url, dealer_id)
+    context = {'reviews': reviews}
+    return HttpResponse("Dealer Reviews: {}".format(reviews))
+
+
+def view1(request):
+    # Function body for view1
+    return HttpResponse("View 1")
+
+def view2(request):
+    # Function body for view2
+    return HttpResponse("View 2")
 
 def signup(request):
     if request.method == 'POST':
@@ -47,4 +70,9 @@ def contact(request):
     return render(request, 'djangoapp/contact.html')
 
 def get_dealerships(request):
-    return render(request, 'djangoapp/index.html')
+    if request.method == "GET":
+        context = {}
+        url = "https://favouralain-3000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+        dealerships = get_dealers_from_cf(url)
+        context["dealership_list"] = dealerships
+        return render(request, 'djangoapp/index.html', context)
