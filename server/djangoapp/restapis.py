@@ -1,100 +1,91 @@
 import requests
+import json
+from ibm_watson import NaturalLanguageUnderstandingV1
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+from ibm_watson.natural_language_understanding_v1 import Features, SentimentOptions
 from .models import CarDealer, DealerReview
 from requests.auth import HTTPBasicAuth
 
-def post_request(url, json_payload, api_key=None, **kwargs):
+# Create a `get_request` to make HTTP GET requests
+def get_request(url, **kwargs):
+    response = None
     try:
-        if api_key:
-            response = requests.post(url, json=json_payload, params=kwargs,
-                                     auth=HTTPBasicAuth('apikey', api_key))
-        else:
-            response = requests.post(url, json=json_payload, params=kwargs)
-        response.raise_for_status()
+        response = requests.get(url, headers={'Content-Type': 'application/json'}, params=kwargs)
+        response.raise_for_status()  # Raise exception for non-200 status codes
     except requests.exceptions.RequestException as e:
         print(f"Network exception occurred: {e}")
-        return None
-    status_code = response.status_code
-    print("With status {} ".format(status_code))
-    json_data = response.json()
-    return json_data
+    return response.json() if response else None
 
-def get_request(url, api_key=None, **kwargs):
+# Create a `post_request` to make HTTP POST requests
+def post_request(url, json_payload, **kwargs):
     try:
-        if api_key:
-            response = requests.get(url, headers={'Content-Type': 'application/json'}, params=kwargs,
-                                    auth=HTTPBasicAuth('apikey', api_key))
-        else:
-            response = requests.get(url, headers={'Content-Type': 'application/json'}, params=kwargs)
-        response.raise_for_status()
+        response = requests.post(url, json=json_payload, params=kwargs)
+        response.raise_for_status()  # Raise exception for non-200 status codes
     except requests.exceptions.RequestException as e:
         print(f"Network exception occurred: {e}")
-        return None
-    status_code = response.status_code
-    print("With status {} ".format(status_code))
-    json_data = response.json()
-    return json_data
+    return response.json() if response else None
 
-def analyze_review_sentiments(dealerreview, api_key=None):
-    url = "https://api.eu-de.natural-language-understanding.watson.cloud.ibm.com/instances/b545aead-a3dc-4b6b-8c62-2a46e8c62980/v1/analyze"
-    params = {
-        "text": dealerreview,
-        "version": "2022-01-01",
-        "features": "emotion,sentiment",
-        "return_analyzed_text": True
-    }
-    response = get_request(url, api_key, **params)
-    if response:
-        return response
-
-def get_dealers_from_cf(url, api_key=None, **kwargs):
+# Create a get_dealers_from_cf method to get dealers from a cloud function
+def get_dealers_from_cf(url, **kwargs):
     results = []
-    json_result = get_request(url, api_key, **kwargs)
+    json_result = get_request(url, **kwargs)
     if json_result:
-        if isinstance(json_result, list):
-            for dealer_doc in json_result:
-                dealer = dealer_doc  # Add this line
-                dealer_obj = CarDealer(
-                    address=dealer.get("address", ""),
-                    city=dealer.get("city", ""),
-                    full_name=dealer.get("full_name", ""),
-                    id=dealer.get("id", ""),
-                    lat=dealer.get("lat", 0),
-                    long=dealer.get("long", 0),
-                    short_name=dealer.get("short_name", ""),
-                    st=dealer.get("st", ""),
-                    zip=dealer.get("zip", "")
-                )
-                results.append(dealer_obj)
-        else:
-            print("Error: Invalid JSON format for dealers data")
+        for dealer in json_result:
+            dealer_obj = CarDealer(
+                address=dealer.get("address", ""),
+                city=dealer.get("city", ""),
+                full_name=dealer.get("full_name", ""),
+                id=dealer.get("id", None),
+                lat=dealer.get("lat", None),
+                long=dealer.get("long", None),
+                short_name=dealer.get("short_name", ""),
+                st=dealer.get("st", ""),
+                zip=dealer.get("zip", "")
+            )
+            results.append(dealer_obj)
     return results
 
-
-def get_dealer_by_id_from_cf(url, id, api_key=None):
-    results = get_request(url, api_key, id=id)
-    if results:
-        return results[0]
-    else:
-        return None
-
-def get_dealers_from_cf(url, api_key=None, **kwargs):
+# Create a get_dealer_reviews_from_cf method to get reviews by dealer id from a cloud function
+def get_dealer_reviews_from_cf(url, **kwargs):
     results = []
-    json_result = get_request(url, api_key, **kwargs)
+    json_result = get_request(url, **kwargs)
     if json_result:
-        if isinstance(json_result, list):
-            for dealer_doc in json_result:
-                dealer_obj = CarDealer(
-                    address=dealer_doc.get("address", ""),
-                    city=dealer_doc.get("city", ""),
-                    full_name=dealer_doc.get("full_name", ""),
-                    id=dealer_doc.get("id", ""),
-                    lat=dealer_doc.get("lat", 0),
-                    long=dealer_doc.get("long", 0),
-                    short_name=dealer_doc.get("short_name", ""),
-                    st=dealer_doc.get("st", ""),
-                    zip=dealer_doc.get("zip", "")
-                )
-                results.append(dealer_obj)
-        else:
-            print("Error: Invalid JSON format for dealers data")
+        for dealer_review in json_result:
+            sentiment = analyze_review_sentiments(dealer_review['review'])
+            reviews_obj = DealerReview(
+                dealership=dealer_review.get("dealership", None),
+                name=dealer_review.get("name", ""),
+                purchase=dealer_review.get("purchase", False),
+                id=dealer_review.get("id", None),
+                review=dealer_review.get("review", ""),
+                purchase_date=dealer_review.get("purchase_date", None),
+                car_make=dealer_review.get("car_make", ""),
+                car_model=dealer_review.get("car_model", ""),
+                car_year=dealer_review.get("car_year", None),
+                sentiment=sentiment
+            )
+            results.append(reviews_obj)
     return results
+
+# Create an `analyze_review_sentiments` method to call Watson NLU and analyze text
+def analyze_review_sentiments(dealer_review):
+    url = "https://api.eu-de.natural-language-understanding.watson.cloud.ibm.com/instances/b545aead-a3dc-4b6b-8c62-2a46e8c62980"
+    api_key = "QrQa3edWC2hyx6ta7MAWgRDFm8rFvmFXlmdaNuL3GTdc"
+
+    authenticator = IAMAuthenticator(api_key)
+    natural_language_understanding = NaturalLanguageUnderstandingV1(
+        version='2022-04-07',
+        authenticator=authenticator
+    )
+
+    natural_language_understanding.set_service_url(url)
+
+    try:
+        response = natural_language_understanding.analyze(
+            text=dealer_review,
+            features=Features(sentiment=SentimentOptions())
+        ).get_result()
+        return response['sentiment']['document']['score']
+    except Exception as e:
+        print(f"Exception occurred during sentiment analysis: {e}")
+        return 0
