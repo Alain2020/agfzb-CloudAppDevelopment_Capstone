@@ -18,7 +18,7 @@ urlpatterns = [
     # path for login
 
     # path for logout
-    
+     path('registration/', views.registration_request, name='registration'),
     path(route='', view=views.get_dealerships, name='index'),
     path('about/', view=views.about, name='about'),
     path('contact/', view=views.contact, name='contact'),

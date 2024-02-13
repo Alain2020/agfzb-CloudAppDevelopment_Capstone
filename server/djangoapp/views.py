@@ -50,18 +50,16 @@ def registration_request(request):
     if request.method == 'GET':
         return render(request, 'djangoapp/registration.html', context)
     elif request.method == 'POST':
+        # Extract form data
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        
         # Check if user exists
-        username = request.POST['username']
-        password = request.POST['psw']
-        first_name = request.POST['firstname']
-        last_name = request.POST['lastname']
-        user_exist = False
-        try:
-            User.objects.get(username=username)
-            user_exist = True
-        except:
-            logger.error("New user")
+        user_exist = User.objects.filter(username=username).exists()
         if not user_exist:
+            # Create new user
             user = User.objects.create_user(username=username, first_name=first_name, last_name=last_name, password=password)
             login(request, user)
             return redirect("djangoapp:index")
@@ -73,7 +71,7 @@ def registration_request(request):
 def get_dealerships(request):
     if request.method == "GET":
         context = {}
-        url =  "https://favouralain-3000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+        url =  "https://favouralain-3000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
         dealerships = get_dealers_from_cf(url)
         context["dealership_list"] = dealerships
         return render(request, 'djangoapp/index.html', context)
@@ -82,7 +80,7 @@ def get_dealerships(request):
 def get_dealer_details(request, dealer_id):
     if request.method == "GET":
         context = {}
-        dealer_url="https://favouralain-3000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+        dealer_url="https://favouralain-3000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
         reviews_url= "https://favouralain-5000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/api/post_review"
         dealerships = get_dealers_from_cf(dealer_url, id=dealer_id)
         context['dealership'] = dealerships[0]
@@ -104,24 +102,36 @@ def add_review(request, dealer_id):
     elif request.method == "POST":
         if request.user.is_authenticated:
             url = "https://favouralain-5000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/api/post_review"
-            review = dict()
-            review["id"] = 1
-            review["dealership"] = dealer_id
-            review["name"] = request.POST.get('content')
-            review["review"] = request.POST.get('content')
-            review["purchase"] = request.POST.get('purchasecheck') == "on"
-            review["purchase_date"] = request.POST.get('purchasedate')
-            car_models = CarModel.objects.filter(id=request.POST.get('car'))
-            car_model = car_models[0]
-            review["car_make"] = car_model.carmake.carmake
-            review["car_model"] = car_model.model
-            review["car_year"] = str(car_model.year)[0:4]
-            print(review)
+            review = {
+                "id": 1,
+                "dealership": dealer_id,
+                "name": request.POST.get('name'),
+                "review": request.POST.get('review'),
+                "purchase": request.POST.get('purchasecheck') == "on",
+                "purchase_date": request.POST.get('purchasedate'),
+            }
             response = post_request(url, review, dealerId=dealer_id)
-            print(response)
         return redirect("djangoapp:dealer_details", dealer_id=dealer_id)
-        
+
 # Add the signup view here
 def signup(request):
-    # Your signup logic goes here
-    pass
+    context = {}
+    if request.method == 'GET':
+        return render(request, 'djangoapp/registration.html', context)
+    elif request.method == 'POST':
+        # Extract form data
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        
+        # Check if user exists
+        user_exist = User.objects.filter(username=username).exists()
+        if not user_exist:
+            # Create new user
+            user = User.objects.create_user(username=username, first_name=first_name, last_name=last_name, password=password)
+            login(request, user)
+            return redirect("djangoapp:index")
+        else:
+            context['message'] = "User already exists."
+            return render(request, 'djangoapp/registration.html', context)
