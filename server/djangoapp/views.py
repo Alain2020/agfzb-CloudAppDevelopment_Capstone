@@ -78,15 +78,16 @@ def get_dealerships(request):
 
 # Create a `get_dealer_details` view to render the reviews of a dealer
 def get_dealer_details(request, dealer_id):
-    if request.method == "GET":
-        context = {}
-        dealer_url="https://favouralain-3000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
-        reviews_url= "https://favouralain-5000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/api/post_review"
-        dealerships = get_dealers_from_cf(dealer_url, id=dealer_id)
+    context = {}
+    dealer_url = "https://favouralain-3000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+    reviews_url = "https://favouralain-5000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/api/post_review"
+    dealerships = get_dealers_from_cf(dealer_url, id=dealer_id)
+    if dealerships:
         context['dealership'] = dealerships[0]
-        reviews = get_dealer_reviews_from_cf(reviews_url, id=dealer_id)
-        context['reviews'] = reviews
-        return render(request, 'djangoapp/dealer_details.html', context)
+    reviews = get_dealer_reviews_from_cf(reviews_url, id=dealer_id)
+    context['reviews'] = reviews
+    return render(request, 'djangoapp/dealer_details.html', context)
+
 
 # Create a `add_review` view to submit a review
 def add_review(request, dealer_id):
@@ -95,10 +96,14 @@ def add_review(request, dealer_id):
         dealer_url = "https://favouralain-3000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
         dealerships = get_dealers_from_cf(dealer_url, id=dealer_id)
         car_models = CarModel.objects.filter(dealer_id=dealer_id)
-        context['cars'] = car_models
-        context['dealership'] = dealerships[0]
-        context['dealer_id'] = dealer_id
-        return render(request, 'djangoapp/add_review.html', context)
+        if dealerships:
+            context['cars'] = car_models
+            context['dealership'] = dealerships[0]
+            context['dealer_id'] = dealer_id
+            return render(request, 'djangoapp/add_review.html', context)
+        else:
+            # Handle case where dealership not found
+            return redirect("djangoapp:index")
     elif request.method == "POST":
         if request.user.is_authenticated:
             url = "https://favouralain-5000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/api/post_review"
@@ -135,3 +140,4 @@ def signup(request):
         else:
             context['message'] = "User already exists."
             return render(request, 'djangoapp/registration.html', context)
+
